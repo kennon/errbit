@@ -10,9 +10,11 @@ if defined? RedmineClient
         :placeholder => "API Token for your account"
       }],
       [:username, {
+        :optional => true,
         :placeholder => "Your username"
       }],
       [:password, {
+        :optional => true,
         :placeholder => "Your password"
       }],
       [:project_id, {
