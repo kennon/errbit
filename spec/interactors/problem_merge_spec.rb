@@ -29,6 +29,7 @@ describe ProblemMerge do
     let(:merged_errs) { problem_1.errs }
     let!(:notice) { Fabricate(:notice, :err => first_errs.first) }
     let!(:notice_1) { Fabricate(:notice, :err => merged_errs.first) }
+
     it 'delete one of problem' do
       expect {
         problem_merge.merge
@@ -37,12 +38,25 @@ describe ProblemMerge do
 
     it 'move all err in one problem' do
       problem_merge.merge
-      problem.reload.errs.should eq (first_errs | merged_errs)
+      expect(problem.reload.errs.map(&:id).sort).to eq (first_errs | merged_errs).map(&:id).sort
     end
 
     it 'update problem cache' do
-      ProblemUpdaterCache.should_receive(:new).with(problem).and_return(mock(:update => true))
+      expect(ProblemUpdaterCache).to receive(:new).with(problem).and_return(double(:update => true))
       problem_merge.merge
+    end
+
+    context "with problem with comment" do
+      let!(:comment) { Fabricate(:comment, :err => problem ) }
+      let!(:comment_2) { Fabricate(:comment, :err => problem_1, :user => comment.user ) }
+      it 'merge comment' do
+        expect {
+          problem_merge.merge
+        }.to change{
+          problem.comments.size
+        }.from(1).to(2)
+        expect(comment_2.reload.err).to eq problem
+      end
     end
   end
 end
